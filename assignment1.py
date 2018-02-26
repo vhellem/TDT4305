@@ -15,6 +15,8 @@ columns = ['utc_time', 'country_name', "country_code", "place_type", "place_name
 #Task 1.a
 #print(tweets.count())
 
+
+
 #Task 1.b
 usernames = tweets.map(lambda x: x[columns.index("username")]).distinct()
 #print(usernames.count())
@@ -29,8 +31,30 @@ places = tweets.map(lambda x: x[columns.index("place_name")]).distinct()
 
 #Task 1.e
 languages = tweets.map(lambda x: x[columns.index("language")]).distinct()
-print(languages.count())
+#print(languages.count())
 
 #Task 1.f
+#lat = tweets.map(lambda x: float(x[columns.index("latitude")])).min()
+#print(lat)
+
+#Task 1.g
+#long = tweets.map(lambda x: float(x[columns.index("longitude")])).min()
+#print(long)
+
+#Task 1.h
+#lat = tweets.map(lambda x: float(x[columns.index("latitude")])).max()
+#print(lat)
+
+#Task 1.i
+#long = tweets.map(lambda x: float(x[columns.index("longitude")])).max()
+#print(long)
+
+#Task 1.j
+#avgLength = tweets.map(lambda x: len(x[columns.index("tweet_text")])).stats().mean()
+#print(avgLength)
+
+#Task 1.f
+#avgLength = tweets.map(lambda x: len(x[columns.index("tweet_text")].split(" "))).stats().mean()
+#print(avgLength)
 
 
