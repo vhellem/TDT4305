@@ -15,4 +15,4 @@ columns = ['utc_time', 'country_name', "country_code", "place_type", "place_name
 
 countries = tweets.map(lambda x: (x[columns.index("country_name")], 1)).reduceByKey(lambda x, y: x+y).sortBy(lambda x: (-x[1], x[0]))
 
-print(countries.take(200))
+print(countries.coalesce(1).saveAsTextFile("6b.csv"))
