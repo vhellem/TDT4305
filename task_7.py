@@ -14,6 +14,7 @@ top5Cities = (tweets.filter(lambda x: x[columns.index("country_code")]== "US" an
           .map(lambda x: (x[columns.index("place_name")], 1)).reduceByKey(lambda x, y: x+y).takeOrdered(5, lambda x: (-x[1], x[0]))
           )
 
+file = open("result_7.tsv", "w")
 print(top5Cities)
 top5 = sc.parallelize(top5Cities)
 for city, _ in top5Cities:
@@ -25,8 +26,12 @@ for city, _ in top5Cities:
                      .map(lambda x: (x, 1))
                      .reduceByKey(lambda x, y: x + y)
                      .takeOrdered(10, lambda x: (-x[1], x[0])))
-    print(city, frequentWords)
-    top5.join(frequentWords)
+    s = ""
+    for word, freq in frequentWords:
+         s+= "\t" + word + "\t" + str(freq)
+    file.write(city + s + "\n")
 
-print(top5)
+
+
+file.close()
 
