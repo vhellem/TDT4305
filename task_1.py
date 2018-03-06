@@ -36,11 +36,11 @@ languages = tweets.map(lambda x: x[columns.index("language")]).distinct().count(
 file.write(str(languages) + "\n")
 
 #Task 1.f
-lat = tweets.map(lambda x: float(x[columns.index("latitude")])).min().count()
+lat = tweets.map(lambda x: float(x[columns.index("latitude")])).min()
 file.write(str(lat) + "\n")
 
 #Task 1.g
-long = tweets.map(lambda x: float(x[columns.index("longitude")])).min().count()
+long = tweets.map(lambda x: float(x[columns.index("longitude")])).min()
 file.write(str(long)+ "\n")
 
 #Task 1.h

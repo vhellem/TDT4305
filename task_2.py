@@ -5,6 +5,9 @@ os.environ["PYSPARK_PYTHON"]="python3"
 os.environ["PYSPARK_DRIVER_PYTHON"]="python3"
 sc = SparkContext("local", "Assignment 1")
 sc.setLogLevel("ERROR")
+def toTSVLine(data):
+    return '\t'.join(str(d) for d in data)
+
 
 tweets = sc.textFile("data/geotweets.tsv").map(lambda x: x.split('\t')).sample(False, 0.1, 5)
 
@@ -15,4 +18,4 @@ columns = ['utc_time', 'country_name', "country_code", "place_type", "place_name
 
 countries = tweets.map(lambda x: (x[columns.index("country_name")], 1)).reduceByKey(lambda x, y: x+y).sortBy(lambda x: (-x[1], x[0]))
 
-print(countries.coalesce(1).saveAsTextFile("6b.csv"))
+countries.map(lambda x: toTSVLine(x)).coalesce(1).saveAsTextFile("task_6.tsv")
