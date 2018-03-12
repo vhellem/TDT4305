@@ -16,3 +16,4 @@ Cities = (tweets.filter(lambda x: x[columns.index("country_code")]== "US" and x[
           )
 
 print(Cities.take(10))
+
