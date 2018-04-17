@@ -5,71 +5,63 @@ os.environ["PYSPARK_PYTHON"]="python3"
 os.environ["PYSPARK_DRIVER_PYTHON"]="python3"
 sc = SparkContext("local", "Assignment 1")
 sc.setLogLevel("ERROR")
-import itertools
 
-
+import argparse
 
 columns = ['utc_time', 'country_name', "country_code", "place_type", "place_name", "language", "username", "user_screen_name", "timezone_offset", "number_of_friends", "tweet_text", "latitude", "longitude"]
+parser = argparse.ArgumentParser()
+
+parser.add_argument('-training', '-t', help='Path to training set', type=str)
+parser.add_argument('-input', '-i', help='Path to input file', type=str)
+parser.add_argument('-output', '-o', help='Path to output file', type=str)
+args = parser.parse_args()
 
 
 
-def trainOnDataset(filename, wordList):
-    #Maps place names to the tweet text, tweet text is separared by spaces and converted into a set of words
-    raw = (sc.textFile(filename).map(lambda x: x.split('\t')))
-    tweets = raw.map(lambda x: (x[columns.index('place_name')], set(x[columns.index('tweet_text')].lower().split(' '))))
-    numOfTweets = tweets.count()
-    Tplace = (raw.map(lambda x: (x[columns.index('place_name')], 1))
-              .reduceByKey(lambda x, y: x+y))
-
-    TplaceWord = (tweets.flatMap(lambda x: combineWordWithPlace(x[0], x[1])).filter(lambda x: x[0][1] in wordList)
-                  .reduceByKey(lambda x, y: x+y)
-                    .map(lambda x: (x[0][1], (x[0][0], x[1])))
-                    )
+def bitCount(tweet, inputWords):
+    return np.array([1 if word in tweet else 0 for word in inputWords])
 
 
-    return TplaceWord, Tplace, numOfTweets
-
-def combineWordWithPlace(place, wordList):
-    #Returns the place combined with all the word, along with a counter
-    result = []
-    for word in wordList:
-        result.append(((place, word), 1))
-    return result
+def bayesClassifier(countVector, countPlace, totalTweets):
+    start = countPlace/totalTweets
+    product = np.prod(np.divide(countVector, countPlace))
+    return start*product
 
 
 def run(inputFile, trainingPath, outputPath):
-    inputWords = inputFile.split(" ")
-    TplaceWord, Tplace, count = trainOnDataset(trainingPath, inputWords)
-    probs = Tplace.map(lambda x: (x[0], x[1]/count))
+    inputWords = open(inputFile).readline().lower().split(" ")
+    raw = sc.textFile(trainingPath).map(lambda x: x.split('\t')).sample(False, 0.1, 5)
+    tweets = raw.map(lambda x: (x[columns.index('place_name')], x[columns.index('tweet_text')].lower().split(' ')))
 
-    #TplaceWord = TplaceWord.filter(lambda x: x[0] in inputWords).cache()
-    """
-    #Do it all in one pass
-    TplaceWord = TplaceWord.map(lambda x: x[1])
-    numOfWords = len(inputWords)
-    TplaceWord = TplaceWord.reduceByKey(lambda x, y: x*y)
-    probs = probs.join(TplaceWord).join(Tplace)
-    probs = probs.map(lambda x: (x[0], x[1][0][0]*x[1][0][1]/(x[1][1]*numOfWords)))
-    """
-    #Do it for each word
-    for word in inputWords:
-        wordCountInPlaces = TplaceWord.filter(lambda x: x[0]==word).map(lambda x: x[1])
+    #Creates a row with (place name, (tweet text))
+    numOfTweets = tweets.count()
 
-        probs = probs.join(wordCountInPlaces).join(Tplace)
-        #This will look like (place, ((Probability, Number of Times this word is mentioned from that place), Number of Tweets from that place)
-        probs = probs.map(lambda x: (x[0], x[1][0][0]*x[1][0][1]/x[1][1]))
+    tweets = (tweets.map(lambda x: (x[0],  (bitCount(x[1], inputWords), 1)))
+    #Bit vector with (place name, (bit vector, counter))
+              .reduceByKey(lambda x, y: (np.add(x[0], y[0]), x[1] + y[1]))
+              # Reduces all tweets to (place name, (count of words, count of tweets))
+              .map(lambda x: (x[0], bayesClassifier(x[1][0], x[1][1], numOfTweets))))
+                #Calculates probability for each place of the given tweet being from that place
 
-    out = (probs.top(1, key=lambda x: x[1]))
+
+
     output = open(outputPath, "w")
-    print(out)
-    
-    output.write("\t".join(out))
+    maxPlace = (tweets.max(key=lambda x: x[1]))
+    maxProb = maxPlace[1]
+    if(maxProb==0):
+        return
+    #Filter away all elements that does not have the max probability
+    places = tweets.filter(lambda x: x[1]==maxProb).collect()
+
+    for place, _ in places:
+        output.write(place+"\t")
+    output.write(str(maxProb))
 
 
 
 
 
 
-run("great job", "data/geotweets.tsv", "lol")
+run(args.input, args.training, args.output)
 
 
