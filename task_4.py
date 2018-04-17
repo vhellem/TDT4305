@@ -5,8 +5,10 @@ import datetime
 #os.environ["PYSPARK_DRIVER_PYTHON"]="python3"
 sc = SparkContext("local", "Assignment 1")
 sc.setLogLevel("ERROR")
+def toTSVLine(data):
+    return '\t'.join(str(d) for d in data)
 
-tweets = sc.textFile("data/geotweets.tsv").map(lambda x: x.split('\t')).sample(False, 0.1, 5)
+tweets = sc.textFile("data/geotweets.tsv").map(lambda x: x.split('\t'))
 
 
 columns = ['utc_time', 'country_name', "country_code", "place_type", "place_name", "language", "username", "user_screen_name", "timezone_offset", "number_of_friends", "tweet_text", "latitude", "longitude"]
@@ -25,7 +27,10 @@ mostTraffickingHour = (tweets.map(lambda x: ((x[columns.index("country_name")],
                                              getHourFromTimeStamp(int(x[columns.index("utc_time")]), int(x[columns.index("timezone_offset")]))), 1))
                                             .reduceByKey(lambda x, y: x+y)
                                             .map(lambda x: (x[0][0], (x[0][1], x[1])))
-                                            .reduceByKey(lambda x, y: getMaxTweets(x, y)))
+                                            .reduceByKey(lambda x, y: getMaxTweets(x, y))
+                                            .map(lambda x: (x[0], x[1][0], x[1][1])))
 
-print(mostTraffickingHour)
-print(mostTraffickingHour.take(2))
+#print(mostTraffickingHour)
+#print(mostTraffickingHour.take(2))
+mostTraffickingHour.map(lambda x: toTSVLine(x)).coalesce(1).saveAsTextFile("task_4.tsv")
+

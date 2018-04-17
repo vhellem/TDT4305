@@ -1,13 +1,18 @@
 from pyspark import SparkContext
 import os
 
-os.environ["PYSPARK_PYTHON"]="python3"
-os.environ["PYSPARK_DRIVER_PYTHON"]="python3"
+#os.environ["PYSPARK_PYTHON"]="python3"
+#os.environ["PYSPARK_DRIVER_PYTHON"]="python3"
 sc = SparkContext("local", "Assignment 1")
 sc.setLogLevel("ERROR")
-
 def toTSVLine(data):
     return '\t'.join(str(d) for d in data)
+
+<<<<<<< HEAD
+def toTSVLine(data):
+    return '\t'.join(str(d) for d in data)
+=======
+>>>>>>> 6f46eb74ab45d2608a15c95993746be4e74999ed
 
 tweets = sc.textFile("data/geotweets.tsv").map(lambda x: x.split('\t'))
 
@@ -22,4 +27,10 @@ countriesWithEnoughTweets = (tweets.map(lambda x: (x[columns.index("country_name
 averages = (countriesWithEnoughTweets.map
             (lambda x: (x[0], x[1][0]/x[1][2], x[1][1]/x[1][2])))
 
+<<<<<<< HEAD
 averages.map(lambda x: toTSVLine(x)).coalesce(1).saveAsTextFile("task_3")
+=======
+print(averages.take(10))
+
+averages.map(lambda x: toTSVLine(x)).coalesce(1).saveAsTextFile("task_3.tsv")
+>>>>>>> 6f46eb74ab45d2608a15c95993746be4e74999ed

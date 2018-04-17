@@ -1,12 +1,14 @@
 from pyspark import SparkContext
 import os
 import datetime
-os.environ["PYSPARK_PYTHON"]="python3"
-os.environ["PYSPARK_DRIVER_PYTHON"]="python3"
+#os.environ["PYSPARK_PYTHON"]="python3"
+#os.environ["PYSPARK_DRIVER_PYTHON"]="python3"
 sc = SparkContext("local", "Assignment 1")
 sc.setLogLevel("ERROR")
+def toTSVLine(data):
+    return '\t'.join(str(d) for d in data)
 
-tweets = sc.textFile("data/geotweets.tsv").map(lambda x: x.split('\t')).sample(False, 0.1, 5)
+tweets = sc.textFile("data/geotweets.tsv").map(lambda x: x.split('\t'))
 
 
 columns = ['utc_time', 'country_name', "country_code", "place_type", "place_name", "language", "username", "user_screen_name", "timezone_offset", "number_of_friends", "tweet_text", "latitude", "longitude"]
@@ -16,4 +18,8 @@ Cities = (tweets.filter(lambda x: x[columns.index("country_code")]== "US" and x[
           )
 
 print(Cities.take(10))
+<<<<<<< HEAD
 
+=======
+Cities.map(lambda x: toTSVLine(x)).coalesce(1).saveAsTextFile("task_5.tsv")
+>>>>>>> 6f46eb74ab45d2608a15c95993746be4e74999ed
